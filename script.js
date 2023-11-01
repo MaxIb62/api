@@ -1,48 +1,62 @@
-export function perrosRaza(search, selector){
-    const d = document,
-      $cartas = d.querySelector(selector),
-      $search = d.querySelector(search);
-  
-    $search.addEventListener("keyup", async (e) =>{
-      if (e.key === "Enter") {
-        try{
-          $cartas.innerHTML = `<span class="loader"></span>`;
-          
-          let query = e.target.value.toLowerCase(),
-            res = await 
-          fetch(`https://dog.ceo/api/breeds=${query}`);
-          
-          if (!res.ok) throw "Error al acceder a la API de PokeCartas";
-          
-          let json = await res.json(),
-            $template = "";
 
-          console.log(json);
-  
-          json.forEach((el) => {
-           $template += `
-              <div class="Cartas">
-                <h3>${el.name}</h3>
-                <img src="${el.image}" alt="${el.name}" />
-                
-              </div>
-            `;
-            })
-            $cartas.innerHTML=$template;
-        } catch(error){
-          $cartas.innerHTML = `<p><b>${error}</b></p>`;
-        }
+const apiModule = {
+  fetchData: async () => {
+      try {
+          const response = await fetch('https://dog.ceo/api/breeds/list/all');
+          const data = await response.json();
+          return data.message;
+      } catch (error) {
+          console.error(error);
       }
-      
-    });
-  
-    $search.addEventListener("search", (e) =>{
-      $cartas.innerHTML = "";
-    })
-    
-  }
-    $search.addEventListener("search", (e) =>{
-      $cartas.innerHTML = "";
-    })
+  },
 
-  
+  fetchBreedImage: async (breed) => {
+      try {
+          const response = await fetch(`https://dog.ceo/api/breed/${breed}/images/random`);
+          const data = await response.json();
+          return data.message;
+      } catch (error) {
+          console.error(error);
+      }
+  }
+};
+
+
+const domModule = {
+  displayBreeds: (breeds) => {
+      const breedsList = document.getElementById('breedsList');
+      breedsList.innerHTML = '';
+
+      for (const breed in breeds) {
+          const breedItem = document.createElement('p');
+          breedItem.textContent = breed;
+          breedItem.addEventListener('click', async () => {
+              const dogImage = await apiModule.fetchBreedImage(breed);
+              document.getElementById('dogImage').src = dogImage;
+          });
+          breedsList.appendChild(breedItem);
+      }
+  }
+};
+
+
+const eventModule = {
+  init: () => {
+      const searchInput = document.getElementById('searchInput');
+      searchInput.addEventListener('keyup', async (event) => {
+          if (event.key === 'Enter') {
+              const searchTerm = searchInput.value;
+              const breeds = await apiModule.fetchData();
+              if (breeds[searchTerm]) {
+                  const dogImage = await apiModule.fetchBreedImage(searchTerm);
+                  document.getElementById('dogImage').src = dogImage;
+              } else {
+                  alert('Raza de perro no encontrada.');
+              }
+          }
+      });
+  }
+};
+
+
+eventModule.init();
